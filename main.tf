@@ -13,7 +13,7 @@ terraform {
   }
     backend "s3" {
     bucket = "sampledevopsb234"
-    key    = "prod-jenkins.tfstate"
+    key    = "dev-jenkins.tfstate"
     region = "us-east-1"
   }
 }
@@ -114,8 +114,8 @@ resource "aws_instance" "web-1" {
     vpc_security_group_ids = ["${aws_security_group.allow_all.id}"]
     associate_public_ip_address = true	
     tags = {
-        Name = "Prod-Server-1"
-        Env = "Prod"
+        Name = "DEV-Server-1"
+        Env = "DEV"
         Owner = "Santhosh"
 	CostCenter = "ABCD"
     }
