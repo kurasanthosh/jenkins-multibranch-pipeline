@@ -1,23 +1,28 @@
 pipeline {
     agent any
+    environemts{
+        PACKER_ACTION = 'YES'
+        TERRAFORM_ACTION = 'DEPLOY'
+        AMI_ACTION = 'DONT-DELETE'
+    }
 
     stages {
         stage('CheckOut GitHub Repo') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: 'master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'GitHubAccess', url: 'git@github.com:kurasanthosh/git-packer-jenkins-aws.git']]])
+                checkout([$class: 'GitSCM', branches: [[name: 'master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'GitHubAccess', url: 'git@github.com:kurasanthosh/testing-repo.git']]])
             }
         }
 
         stage('Perform Packer Build') {
             when {
                     expression {
-                        params.PACKER_ACTION == 'YES'
+                        env.PACKER_ACTION == 'YES'
                     }
             }
             steps {
                     sh 'pwd'
                     sh 'ls -al'
-                    sh 'packer build -var-file packer-vars.json -var=aws_access_key=${mask_aws_access_key} -var=aws_secret_key=${mask_aws_secret_key} packer.json'
+                    sh 'packer build -var-file packer-vars.json packer.json'
                     sh "tail -2 output.txt | head -2 | awk 'match(\$0, /ami-.*/) { print substr(\$0, RSTART, RLENGTH) }' > ami.txt"
                     sh "echo \$(cat ami.txt) > ami.txt"
                     script {
@@ -30,7 +35,7 @@ pipeline {
         stage('No Packer Build') {
             when {
                     expression {
-                        params.PACKER_ACTION == 'NO'
+                        env.PACKER_ACTION == 'NO'
                     }
             }
             steps {
@@ -43,30 +48,30 @@ pipeline {
         stage('Terraform Plan') {
             when {
                     expression {
-                        params.TERRAFORM_ACTION == 'DEPLOY'
+                        env.TERRAFORM_ACTION == 'DEPLOY'
                     }
             }
             steps {
-                    sh 'terraform init -backend-config="access_key=${mask_aws_access_key}" -backend-config="secret_key=${mask_aws_secret_key}"'
+                    sh 'terraform init'
                     sh 'terraform validate'
-                    sh 'terraform plan -var="AWS_ACCESS_KEY_ID=${mask_aws_access_key}" -var="AWS_SECRET_ACCESS_KEY=${mask_aws_secret_key}"'
+                    sh 'terraform plan'
             }
         }
         stage('Terraform Apply') {
             when {
                     expression {
-                        params.TERRAFORM_ACTION == 'DEPLOY'
+                        env.TERRAFORM_ACTION == 'DEPLOY'
                     }
             }
             steps {
                     sh 'terraform init'
-                    sh 'terraform apply -var="AWS_ACCESS_KEY_ID=${mask_aws_access_key}" -var="AWS_SECRET_ACCESS_KEY=${mask_aws_secret_key}" --auto-approve'
+                    sh 'terraform apply --auto-approve'
             }
         }
         stage('Terraform State Show') {
             when {
                     expression {
-                        params.TERRAFORM_ACTION == 'DEPLOY'
+                        env.TERRAFORM_ACTION == 'DEPLOY'
                     }
             }
             steps {
@@ -77,18 +82,18 @@ pipeline {
         stage('Terraform Destroy') {
             when {
                     expression {
-                        params.TERRAFORM_ACTION == 'DESTROY'
+                        env.TERRAFORM_ACTION == 'DESTROY'
                     }
             }
             steps {
                     sh 'terraform init'
-                    sh 'terraform destroy -var="AWS_ACCESS_KEY_ID=${mask_aws_access_key}" -var="AWS_SECRET_ACCESS_KEY=${mask_aws_secret_key}" --auto-approve'
+                    sh 'terraform destroy --auto-approve'
             }
         }
         stage('Delete AMI') {
             when {
                     expression {
-                        params.AMI_ACTION == 'DELETE'
+                        env.AMI_ACTION == 'DELETE'
                     }
             }
             steps {
