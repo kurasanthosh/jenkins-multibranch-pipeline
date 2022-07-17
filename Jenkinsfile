@@ -41,7 +41,7 @@ pipeline {
         }
         stage('Terraform Plan') {
             when {
-			branch 'dev'
+			branch 'uat'
             expression {
                 env.TERRAFORM_ACTION == 'DEPLOY'
                  }
@@ -54,7 +54,7 @@ pipeline {
         }
         stage('Terraform Apply') {
             when {
-			branch 'dev'
+			branch 'uat'
             expression {
                 env.TERRAFORM_ACTION == 'DEPLOY'
                  }
@@ -66,7 +66,7 @@ pipeline {
         }
         stage('Terraform State Show') {
             when {
-			branch 'dev'
+			branch 'uat'
             expression {
                 env.TERRAFORM_ACTION == 'DEPLOY'
                  }
@@ -78,7 +78,7 @@ pipeline {
         }
         stage('Terraform Destroy') {
             when {
-			branch 'dev'
+			branch 'uat'
             expression {
                 env.TERRAFORM_ACTION == 'DESTROY'
                  }
@@ -90,7 +90,7 @@ pipeline {
         }
         stage('Delete AMI') {
             when {
-			branch 'dev'
+			branch 'uat'
             expression {
                 env.AMI_ACTION == 'DELETE'
                  }
