@@ -1,18 +1,12 @@
 pipeline {
     agent any
-    environemts{
-        PACKER_ACTION = 'YES'
-        TERRAFORM_ACTION = 'DEPLOY'
-        AMI_ACTION = 'DONT-DELETE'
+    environment {
+        PACKER_ACTION = 'NO'
+        TERRAFORM_ACTION = 'DESTROY'
+        AMI_ACTION = 'DELETE'
     }
 
     stages {
-        stage('CheckOut GitHub Repo') {
-            steps {
-                checkout([$class: 'GitSCM', branches: [[name: 'master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'GitHubAccess', url: 'git@github.com:kurasanthosh/testing-repo.git']]])
-            }
-        }
-
         stage('Perform Packer Build') {
             when {
                     expression {
@@ -35,21 +29,22 @@ pipeline {
         stage('No Packer Build') {
             when {
                     expression {
-                        env.PACKER_ACTION == 'NO'
+                        env.PACKER_ACTION != 'YES'
                     }
             }
             steps {
                     sh 'pwd'
                     sh 'ls -al'
                     sh 'echo "" >> variables.tf'
-                    sh "echo variable \\\"imagename\\\" { default = \\\"ami-08edb90f5d39346f6\\\" } >> variables.tf"
+                    sh "echo variable \\\"imagename\\\" { default = \\\"ami-0319a95bbfd9a3a26\\\" } >> variables.tf"
             }
         }
         stage('Terraform Plan') {
             when {
-                    expression {
-                        env.TERRAFORM_ACTION == 'DEPLOY'
-                    }
+			branch 'master'
+            expression {
+                env.TERRAFORM_ACTION == 'DEPLOY'
+                 }
             }
             steps {
                     sh 'terraform init'
@@ -59,9 +54,10 @@ pipeline {
         }
         stage('Terraform Apply') {
             when {
-                    expression {
-                        env.TERRAFORM_ACTION == 'DEPLOY'
-                    }
+			branch 'master'
+            expression {
+                env.TERRAFORM_ACTION == 'DEPLOY'
+                 }
             }
             steps {
                     sh 'terraform init'
@@ -70,9 +66,10 @@ pipeline {
         }
         stage('Terraform State Show') {
             when {
-                    expression {
-                        env.TERRAFORM_ACTION == 'DEPLOY'
-                    }
+			branch 'master'
+            expression {
+                env.TERRAFORM_ACTION == 'DEPLOY'
+                 }
             }
             steps {
                     sh 'terraform init'
@@ -81,9 +78,10 @@ pipeline {
         }
         stage('Terraform Destroy') {
             when {
-                    expression {
-                        env.TERRAFORM_ACTION == 'DESTROY'
-                    }
+			branch 'master'
+            expression {
+                env.TERRAFORM_ACTION != 'DEPLOY'
+                 }
             }
             steps {
                     sh 'terraform init'
@@ -92,13 +90,14 @@ pipeline {
         }
         stage('Delete AMI') {
             when {
-                    expression {
-                        env.AMI_ACTION == 'DELETE'
-                    }
+			branch 'master'
+            expression {
+                env.AMI_ACTION == 'DELETE'
+                 }
             }
             steps {
                 script {
-                        def AMIID = 'ami-08edb90f5d39346f6'
+                        def AMIID = 'ami-0319a95bbfd9a3a26'
                         sh "aws ec2 deregister-image --image-id $AMIID"
                 }
             }
