@@ -13,7 +13,7 @@ terraform {
   }
     backend "s3" {
     bucket = "sampledevopsb234"
-    key    = "jenkins.tfstate"
+    key    = "prod-jenkins.tfstate"
     region = "us-east-1"
   }
 }
