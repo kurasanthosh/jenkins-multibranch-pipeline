@@ -36,7 +36,7 @@ pipeline {
                     sh 'pwd'
                     sh 'ls -al'
                     sh 'echo "" >> variables.tf'
-                    sh "echo variable \\\"imagename\\\" { default = \\\"ami-0319a95bbfd9a3a26\\\" } >> variables.tf"
+                    sh "echo variable \\\"imagename\\\" { default = \\\"ami-079cfedd864330312\\\" } >> variables.tf"
             }
         }
         stage('Terraform Plan') {
@@ -97,7 +97,7 @@ pipeline {
             }
             steps {
                 script {
-                        def AMIID = 'ami-0319a95bbfd9a3a26'
+                        def AMIID = 'ami-079cfedd864330312'
                         sh "aws ec2 deregister-image --image-id $AMIID"
                 }
             }
