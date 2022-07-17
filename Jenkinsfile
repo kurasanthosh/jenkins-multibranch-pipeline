@@ -80,7 +80,7 @@ pipeline {
             when {
 			branch 'master'
             expression {
-                env.TERRAFORM_ACTION != 'DEPLOY'
+                env.TERRAFORM_ACTION == 'DEPLOY'
                  }
             }
             steps {
