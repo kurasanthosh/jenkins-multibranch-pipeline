@@ -115,7 +115,7 @@ resource "aws_instance" "web-1" {
     associate_public_ip_address = true	
     tags = {
         Name = "Prod-Server-1"
-        Env = "Prod"
+        Env = "Production"
         Owner = "Santhosh"
 	CostCenter = "ABCD"
     }
@@ -130,7 +130,7 @@ resource "aws_instance" "web-2" {
     associate_public_ip_address = true	
     tags = {
         Name = "Prod-Server-2"
-        Env = "Prod"
+        Env = "Production"
         Owner = "Santhosh"
 	CostCenter = "ABCD"
     }
