@@ -144,8 +144,8 @@ resource "aws_instance" "web-" {
     vpc_security_group_ids = ["${aws_security_group.allow_all.id}"]
     associate_public_ip_address = true	
     tags = {
-        Name = "UAT-Server-3"
-        Env = "UAT"
+        Name = "DEV-Server-3"
+        Env = "DEV"
         Owner = "Santhosh"
 	CostCenter = "ABCD"
     }
