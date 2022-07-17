@@ -1,0 +1,102 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('CheckOut GitHub Repo') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: 'master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'GitHubAccess', url: 'git@github.com:kurasanthosh/git-packer-jenkins-aws.git']]])
+            }
+        }
+
+        stage('Perform Packer Build') {
+            when {
+                    expression {
+                        params.PACKER_ACTION == 'YES'
+                    }
+            }
+            steps {
+                    sh 'pwd'
+                    sh 'ls -al'
+                    sh 'packer build -var-file packer-vars.json -var=aws_access_key=${mask_aws_access_key} -var=aws_secret_key=${mask_aws_secret_key} packer.json'
+                    sh "tail -2 output.txt | head -2 | awk 'match(\$0, /ami-.*/) { print substr(\$0, RSTART, RLENGTH) }' > ami.txt"
+                    sh "echo \$(cat ami.txt) > ami.txt"
+                    script {
+                        def AMIID = readFile('ami.txt').trim()
+                        sh 'echo "" >> variables.tf'
+                        sh "echo variable \\\"imagename\\\" { default = \\\"$AMIID\\\" } >> variables.tf"
+                    }
+            }
+        }
+        stage('No Packer Build') {
+            when {
+                    expression {
+                        params.PACKER_ACTION == 'NO'
+                    }
+            }
+            steps {
+                    sh 'pwd'
+                    sh 'ls -al'
+                    sh 'echo "" >> variables.tf'
+                    sh "echo variable \\\"imagename\\\" { default = \\\"ami-08edb90f5d39346f6\\\" } >> variables.tf"
+            }
+        }
+        stage('Terraform Plan') {
+            when {
+                    expression {
+                        params.TERRAFORM_ACTION == 'DEPLOY'
+                    }
+            }
+            steps {
+                    sh 'terraform init -backend-config="access_key=${mask_aws_access_key}" -backend-config="secret_key=${mask_aws_secret_key}"'
+                    sh 'terraform validate'
+                    sh 'terraform plan -var="AWS_ACCESS_KEY_ID=${mask_aws_access_key}" -var="AWS_SECRET_ACCESS_KEY=${mask_aws_secret_key}"'
+            }
+        }
+        stage('Terraform Apply') {
+            when {
+                    expression {
+                        params.TERRAFORM_ACTION == 'DEPLOY'
+                    }
+            }
+            steps {
+                    sh 'terraform init'
+                    sh 'terraform apply -var="AWS_ACCESS_KEY_ID=${mask_aws_access_key}" -var="AWS_SECRET_ACCESS_KEY=${mask_aws_secret_key}" --auto-approve'
+            }
+        }
+        stage('Terraform State Show') {
+            when {
+                    expression {
+                        params.TERRAFORM_ACTION == 'DEPLOY'
+                    }
+            }
+            steps {
+                    sh 'terraform init'
+                    sh 'terraform state list'
+            }
+        }
+        stage('Terraform Destroy') {
+            when {
+                    expression {
+                        params.TERRAFORM_ACTION == 'DESTROY'
+                    }
+            }
+            steps {
+                    sh 'terraform init'
+                    sh 'terraform destroy -var="AWS_ACCESS_KEY_ID=${mask_aws_access_key}" -var="AWS_SECRET_ACCESS_KEY=${mask_aws_secret_key}" --auto-approve'
+            }
+        }
+        stage('Delete AMI') {
+            when {
+                    expression {
+                        params.AMI_ACTION == 'DELETE'
+                    }
+            }
+            steps {
+                script {
+                        def AMIID = 'ami-08edb90f5d39346f6'
+                        sh "aws ec2 deregister-image --image-id $AMIID"
+                }
+            }
+        }
+    }
+}
