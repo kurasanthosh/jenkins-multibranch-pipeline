@@ -3,7 +3,7 @@ pipeline {
     environment {
         PACKER_ACTION = 'NO'
         TERRAFORM_ACTION = 'NOT-DESTROY'
-        AMI_ACTION = 'DELETE'
+        AMI_ACTION = 'NOT-DELETE'
     }
 
     stages {
