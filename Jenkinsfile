@@ -1,8 +1,8 @@
 pipeline {
     agent any
     environment {
-        PACKER_ACTION = 'YES'
-        TERRAFORM_ACTION = 'NOT-DESTROY'
+        PACKER_ACTION = 'NO'
+        TERRAFORM_ACTION = 'DEPLOY'
         AMI_ACTION = 'NOT-DELETE'
     }
 
@@ -22,7 +22,7 @@ pipeline {
                     script {
                         def AMIID = readFile('ami.txt').trim()
                         sh 'echo "" >> variables.tf'
-                        sh "echo variable \\\"imagename\\\" { default = \\\"$AMIID\\\" } >> variables.tf"
+                        sh "echo variable \\\"imagename\\\" { default = \\\"ami-079cfedd864330312\\\" } >> variables.tf"
                     }
             }
         }
